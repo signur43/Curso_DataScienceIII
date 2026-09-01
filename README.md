@@ -33,3 +33,35 @@ Rendimiento General:
 Accuracy general: 0.97 (97%), lo que confirma que el modelo predice correctamente el 97% de los casos en general.
 Macro Average y Weighted Average: Indican un rendimiento consistentemente alto en todas las clases, tanto si se les da el mismo peso (macro) como si se pondera por su frecuencia (weighted).
 En resumen, el modelo tiene un rendimiento excelente en la clasificación de los dígitos MNIST, con una alta precisión, recall y F1-score en todas las clases.
+
+
+Implementaremos una validación cruzada (K-Fold Cross-Validation) para evaluar la robustez de la Regresión Logística y verificar si los resultados perfectos persisten en diferentes particiones de los datos de entrenamiento.
+
+¡Gracias por ejecutar la validación cruzada! Como puedes ver, los resultados de la validación cruzada también muestran una precisión perfecta (1.00) en todos los folds, con una desviación estándar de 0.00.
+
+Esto refuerza fuertemente la hipótesis de data leakage. Significa que, incluso cuando el modelo se entrena y evalúa en diferentes subconjuntos de tus datos (los folds de la validación cruzada), sigue logrando un rendimiento perfecto.
+
+Esto es una clara indicación de que el modelo está aprendiendo una relación trivial entre las características (X_train_tfidf) y la variable objetivo (y_train) que no debería existir en un escenario real y, por lo tanto, no es un reflejo genuino de la capacidad predictiva del modelo.
+
+Siguientes Pasos Recomendados:
+
+Necesitamos investigar más a fondo cómo se generó la columna main_topic y cómo texto_reclamo_processed se relaciona con ella. Es muy probable que el main_topic se derive de texto_reclamo de una manera que introduzca directamente la respuesta en las características que el modelo utiliza para predecir.
+
+Para inspeccionar la correlación entre las palabras clave y el main_topic, vamos a revisar los temas identificados por el modelo LDA. Esto nos ayudará a entender si hay palabras clave demasiado específicas que el modelo está utilizando para predecir perfectamente los temas, lo que sería un indicio de fuga de datos.
+
+Los temas identificados por LDA, con sus palabras clave principales, confirman lo que sospechábamos. Cada tema tiene palabras clave muy distintivas y específicas. Esto es una fuerte señal de data leakage. El modelo de clasificación está logrando una precisión perfecta porque las características (palabras en el texto procesado) ya contienen la 'respuesta' sobre a qué tema pertenece un reclamo, en lugar de inferirlo de manera más general.
+
+Para resumir las conclusiones y los siguientes pasos:
+
+Para abordar la fuga de datos, primero identificaremos las palabras clave que causan el problema y las eliminaremos del texto preprocesado. Luego, re-entrenaremos el modelo y evaluaremos su rendimiento de nuevo.
+
+¡Excelente! Los resultados del modelo re-entrenado son mucho más realistas y confirman nuestra hipótesis de fuga de datos.
+
+Observa los cambios clave:
+
+Reducción de la Precisión Total: La precisión general ha bajado del 1.00 perfecto a un 0.96.
+Variabilidad en las Clases: Ahora, no todos los temas tienen una precisión, recall y F1-score de 1.00. Por ejemplo, el Tema 3 muestra una precisión del 0.80 y el Tema 4 un recall del 0.78, lo que es mucho más típico en problemas de clasificación.
+Resultados de Validación Cruzada Realistas: La validación cruzada ahora nos da una precisión media de 0.9700 con una pequeña desviación estándar de 0.0015. Esto indica que el modelo es consistentemente bueno, pero ya no 'perfecto', en diferentes subconjuntos de datos de entrenamiento.
+Estos nuevos resultados demuestran que el modelo ya no está 'memorizando' las respuestas a través de palabras clave obvias. Ahora, la clasificación se basa en patrones más generales en el texto, lo que lo hace un modelo mucho más confiable para predecir temas en reclamos nuevos o no vistos. La matriz de confusión también mostrará errores de clasificación, lo que es una señal saludable de que el modelo está aprendiendo de manera más compleja.
+
+¡Hemos logrado mitigar el problema de la fuga de datos y ahora tenemos un modelo más robusto y creíble!
